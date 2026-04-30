@@ -30,3 +30,18 @@ Thumbs.db
 *.tmp
 *.temp
 temp/
+
+# 备份文件夹
+knowledge_converter_backup*/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+
+# 配置和密钥
+*.key
+*.pem
+.env
+ocr_config.json
