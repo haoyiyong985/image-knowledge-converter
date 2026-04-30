@@ -1,0 +1,50 @@
+{
+  "version": 2,
+  "sessions": {
+    "6f639159f2bb452dbb73114a280fb4ea": [
+      {
+        "expertId": "AndonQExpert",
+        "name": "AndonQ",
+        "profession": "腾讯云技术支持专家",
+        "avatarUrl": "https://acc-1258344699.cos.accelerate.myqcloud.com/workbuddy/experts/avatars/02-Engineering/AndonQExpert/AndonQExpert.png",
+        "promptUrl": "https://acc-1258344699.cos.accelerate.myqcloud.com/workbuddy/experts/experts/02-Engineering/AndonQExpert/AndonQExpert_zh.md",
+        "usedAt": 1775219999429,
+        "industryId": "02-Engineering"
+      }
+    ],
+    "4622c55539cd4d59be6675a573f872eb": [
+      {
+        "expertId": "AndonQExpert",
+        "name": "AndonQ",
+        "profession": "腾讯云技术支持专家",
+        "avatarUrl": "https://acc-1258344699.cos.accelerate.myqcloud.com/workbuddy/experts/avatars/02-Engineering/AndonQExpert/AndonQExpert.png",
+        "promptUrl": "https://acc-1258344699.cos.accelerate.myqcloud.com/workbuddy/experts/experts/02-Engineering/AndonQExpert/AndonQExpert_zh.md",
+        "usedAt": 1775220800077,
+        "industryId": "02-Engineering"
+      }
+    ],
+    "87cc5d7bc6e54bed901e9756327eedf9": [
+      {
+        "expertId": "AndonQExpert",
+        "name": "AndonQ",
+        "profession": "腾讯云技术支持专家",
+        "avatarUrl": "https://acc-1258344699.cos.accelerate.myqcloud.com/workbuddy/experts/avatars/02-Engineering/AndonQExpert/AndonQExpert.png",
+        "promptUrl": "https://acc-1258344699.cos.accelerate.myqcloud.com/workbuddy/experts/experts/02-Engineering/AndonQExpert/AndonQExpert_zh.md",
+        "usedAt": 1775439546169,
+        "industryId": "02-Engineering"
+      }
+    ],
+    "756432e1ee7b45ea8a025c9445ed1d24": [
+      {
+        "expertId": "AndonQExpert",
+        "name": "AndonQ",
+        "profession": "腾讯云技术支持专家",
+        "avatarUrl": "https://acc-1258344699.cos.accelerate.myqcloud.com/workbuddy/experts/avatars/02-Engineering/AndonQExpert/AndonQExpert.png",
+        "promptUrl": "https://acc-1258344699.cos.accelerate.myqcloud.com/workbuddy/experts/experts/02-Engineering/AndonQExpert/AndonQExpert_zh.md",
+        "usedAt": 1775565577089,
+        "industryId": "02-Engineering"
+      }
+    ]
+  },
+  "lastUpdated": 1775566801012
+}

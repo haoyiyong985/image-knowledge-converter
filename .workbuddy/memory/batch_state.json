@@ -1,0 +1,25 @@
+{
+  "session_id": "20260412_160312",
+  "started_at": "2026-04-12T16:03:12.946047",
+  "total_images": 3,
+  "total_batches": 1,
+  "completed_batches": 1,
+  "failed_batches": 0,
+  "batches": {
+    "历史学_000": {
+      "batch_id": "历史学_000",
+      "folder": "历史学",
+      "images": [
+        "待处理图片\\历史学\\Camera_XHS_17048927992631040g00830serdatdjc5g5ncs4e808q4schoc5k8.jpg",
+        "待处理图片\\历史学\\Screenshot_20241124_144758_com.tencent.weread.jpg",
+        "待处理图片\\历史学\\Screenshot_20250705_122754_com.larus.nova.jpg"
+      ],
+      "status": "completed",
+      "created_at": "2026-04-12T16:03:12.946018",
+      "started_at": "2026-04-12T16:03:13.282214",
+      "completed_at": "2026-04-12T16:03:28.237637",
+      "result": "处理 3 张",
+      "retry_count": 0
+    }
+  }
+}

@@ -1,0 +1,112 @@
+# 图片转知识库系统 - 主配置文件
+
+system:
+  name: "图片转知识库系统"
+  version: "1.0.0"
+  debug: false
+  log_level: "INFO"
+
+# 路径配置
+paths:
+  image_input: "images/raw"
+  output: "output"
+  knowledge_base: "knowledge_base"
+  logs: "logs"
+  temp: "temp"
+
+# OCR配置
+ocr:
+  engine: "tesseract"
+  language: "chi_sim+eng"
+  psm_mode: 6
+  oem_mode: 3
+  
+  # 预处理配置
+  preprocessing:
+    enabled: true
+    grayscale: true
+    contrast_enhancement: true
+    denoise: true
+    threshold: 150
+    
+  # 表格检测配置
+  table_detection:
+    enabled: true
+    min_table_area: 10000
+    line_min_length: 50
+
+# 输出配置
+output:
+  formats:
+    - "txt"
+    - "json"
+    - "html"
+    - "markdown"
+  
+  # 文本输出配置
+  text:
+    encoding: "utf-8"
+    preserve_layout: true
+    
+  # 表格输出配置
+  table:
+    format: "csv"
+    include_headers: true
+    
+  # HTML输出配置
+  html:
+    template: "default"
+    include_css: true
+    
+  # Markdown输出配置
+  markdown:
+    include_metadata: true
+    table_format: "github"
+
+# 分类配置
+classification:
+  auto_classify: true
+  confidence_threshold: 0.6
+  
+  # 机器学习配置
+  ml:
+    enabled: true
+    algorithm: "naive_bayes"
+    min_samples: 10
+    test_size: 0.2
+    
+  # 关键词匹配配置
+  keyword:
+    enabled: true
+    case_sensitive: false
+
+# 知识库配置
+knowledge_base:
+  auto_index: true
+  index_update_interval: 3600
+  
+  # 元数据配置
+  metadata:
+    extract_title: true
+    extract_keywords: true
+    generate_summary: true
+    summary_length: 200
+    
+  # 搜索配置
+  search:
+    default_limit: 20
+    fuzzy_match: true
+    fuzzy_threshold: 0.7
+
+# 性能配置
+performance:
+  max_workers: 4
+  batch_size: 10
+  timeout: 300
+  
+# 备份配置
+backup:
+  enabled: true
+  interval: 86400
+  keep_count: 7
+  location: "backup"

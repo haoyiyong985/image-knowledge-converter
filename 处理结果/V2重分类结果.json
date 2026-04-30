@@ -1,0 +1,358 @@
+{
+  "timestamp": "2026-04-11 20:45:14",
+  "total_docs": 49,
+  "categories": {
+    "营养健康": 10,
+    "摄影技巧": 1,
+    "植物养护": 1,
+    "旅游攻略": 30,
+    "历史文化": 4,
+    "综合知识": 2,
+    "教育育儿": 1
+  },
+  "results": [
+    {
+      "original": "01_抗炎饮食与营养科普.md",
+      "category": "营养健康",
+      "confidence": 1.0,
+      "reason": "匹配关键词: 营养, 健康, 饮食, 食物, 蔬菜",
+      "new_name": "营养健康-抗炎饮食与营养科普_1.md"
+    },
+    {
+      "original": "02_肠道健康与饮食分类.md",
+      "category": "营养健康",
+      "confidence": 1.0,
+      "reason": "匹配关键词: 健康, 饮食, 食物, 蔬菜, 水果",
+      "new_name": "营养健康-肠道健康与饮食分类指南.md"
+    },
+    {
+      "original": "03_中医养生与食疗.md",
+      "category": "营养健康",
+      "confidence": 0.9,
+      "reason": "匹配关键词: 健康, 饮食, 食物, 蔬菜, 中医",
+      "new_name": "营养健康-中医养生与食疗.md"
+    },
+    {
+      "original": "04_日常饮食建议.md",
+      "category": "营养健康",
+      "confidence": 1.0,
+      "reason": "匹配关键词: 营养, 健康, 饮食, 食物, 蔬菜",
+      "new_name": "营养健康-日常饮食建议与食谱.md"
+    },
+    {
+      "original": "05_中医经络与穴位.md",
+      "category": "营养健康",
+      "confidence": 1.0,
+      "reason": "匹配关键词: 中医, 养生, 经络, 穴位, 调理",
+      "new_name": "营养健康-中医经络与穴位.md"
+    },
+    {
+      "original": "06_7日益肝食谱.md",
+      "category": "营养健康",
+      "confidence": 0.4,
+      "reason": "匹配关键词: 营养, 饮食, 蛋白质, 食谱",
+      "new_name": "营养健康-7日益肝食谱.md"
+    },
+    {
+      "original": "07_中医养生方子.md",
+      "category": "营养健康",
+      "confidence": 0.5,
+      "reason": "匹配关键词: 中医, 养生, 调理, 疾病, 治疗",
+      "new_name": "营养健康-中医养生方子.md"
+    },
+    {
+      "original": "08_疾病预防与健康管理.md",
+      "category": "营养健康",
+      "confidence": 0.3,
+      "reason": "匹配关键词: 健康, 疾病, 预防",
+      "new_name": "营养健康-疾病预防与健康管理.md"
+    },
+    {
+      "original": "09_急救与健康安全.md",
+      "category": "营养健康",
+      "confidence": 0.9,
+      "reason": "匹配关键词: 健康, 饮食, 蔬菜, 水果, 预防",
+      "new_name": "营养健康-急救与健康安全.md"
+    },
+    {
+      "original": "10_摄影技巧指南.md",
+      "category": "摄影技巧",
+      "confidence": 1.0,
+      "reason": "匹配关键词: 摄影, 拍摄, 技巧, 曝光, 构图",
+      "new_name": "摄影技巧-摄影技巧指南.md"
+    },
+    {
+      "original": "11_植物养护指南.md",
+      "category": "植物养护",
+      "confidence": 1.0,
+      "reason": "匹配关键词: 植物, 养护, 种植, 盆栽, 月季",
+      "new_name": "植物养护-植物养护指南.md"
+    },
+    {
+      "original": "12_北京驻京办美食地图.md",
+      "category": "旅游攻略",
+      "confidence": 0.6066666666666667,
+      "reason": "匹配关键词: 旅游, 景点, 攻略, 交通, 酒店",
+      "new_name": "旅游攻略-12_北京旅游与美食攻略.md"
+    },
+    {
+      "original": "13_东北内蒙古旅游线路.md",
+      "category": "旅游攻略",
+      "confidence": 0.52,
+      "reason": "匹配关键词: 旅游, 景点, 交通, 行程, 城市",
+      "new_name": "旅游攻略-13_东北内蒙古旅游线路.md"
+    },
+    {
+      "original": "14_中国必去50个地方.md",
+      "category": "历史文化",
+      "confidence": 0.2,
+      "reason": "匹配关键词: 文化, 文化遗产",
+      "new_name": "历史文化-14_中国必去50个地方.md"
+    },
+    {
+      "original": "15_山西自驾游攻略.md",
+      "category": "旅游攻略",
+      "confidence": 0.6933333333333334,
+      "reason": "匹配关键词: 旅游, 景点, 攻略, 行程, 路线",
+      "new_name": "旅游攻略-15_山西自驾游攻略.md"
+    },
+    {
+      "original": "16_西安旅游攻略.md",
+      "category": "旅游攻略",
+      "confidence": 0.6066666666666667,
+      "reason": "匹配关键词: 旅游, 旅行, 景点, 攻略, 美食",
+      "new_name": "旅游攻略-16_西安旅游攻略.md"
+    },
+    {
+      "original": "17_成都旅游攻略.md",
+      "category": "旅游攻略",
+      "confidence": 0.8666666666666667,
+      "reason": "匹配关键词: 旅游, 旅行, 景点, 攻略, 出行",
+      "new_name": "旅游攻略-17_成都旅游攻略.md"
+    },
+    {
+      "original": "18_云南旅游攻略.md",
+      "category": "旅游攻略",
+      "confidence": 0.78,
+      "reason": "匹配关键词: 旅游, 旅行, 景点, 攻略, 美食",
+      "new_name": "旅游攻略-18_云南旅游攻略.md"
+    },
+    {
+      "original": "19_贵州旅游攻略.md",
+      "category": "旅游攻略",
+      "confidence": 0.78,
+      "reason": "匹配关键词: 旅游, 旅行, 景点, 攻略, 交通",
+      "new_name": "旅游攻略-19_贵州旅游攻略.md"
+    },
+    {
+      "original": "20_张家界旅游攻略.md",
+      "category": "旅游攻略",
+      "confidence": 0.6066666666666667,
+      "reason": "匹配关键词: 旅游, 旅行, 景点, 攻略, 交通",
+      "new_name": "旅游攻略-20_张家界旅游攻略.md"
+    },
+    {
+      "original": "21_太行山自驾游攻略.md",
+      "category": "旅游攻略",
+      "confidence": 0.78,
+      "reason": "匹配关键词: 旅游, 景点, 攻略, 出行, 行程",
+      "new_name": "旅游攻略-21_太行山自驾游攻略.md"
+    },
+    {
+      "original": "22_杭州旅游攻略.md",
+      "category": "旅游攻略",
+      "confidence": 1.0,
+      "reason": "匹配关键词: 旅游, 旅行, 景点, 攻略, 出行",
+      "new_name": "旅游攻略-22_杭州旅游攻略.md"
+    },
+    {
+      "original": "23_三亚旅游攻略.md",
+      "category": "旅游攻略",
+      "confidence": 0.8666666666666667,
+      "reason": "匹配关键词: 旅游, 景点, 攻略, 出行, 交通",
+      "new_name": "旅游攻略-23_三亚旅游攻略.md"
+    },
+    {
+      "original": "24_新疆旅游攻略.md",
+      "category": "旅游攻略",
+      "confidence": 0.26,
+      "reason": "匹配关键词: 旅游, 景点, 攻略",
+      "new_name": "旅游攻略-24_新疆旅游攻略.md"
+    },
+    {
+      "original": "25_秦岭自驾环线.md",
+      "category": "旅游攻略",
+      "confidence": 0.52,
+      "reason": "匹配关键词: 景点, 行程, 路线, 城市, 自驾",
+      "new_name": "旅游攻略-25_秦岭自驾环线.md"
+    },
+    {
+      "original": "26_石家庄云南自驾路线.md",
+      "category": "旅游攻略",
+      "confidence": 0.52,
+      "reason": "匹配关键词: 景点, 行程, 路线, 城市, 自驾",
+      "new_name": "旅游攻略-26_石家庄云南自驾路线.md"
+    },
+    {
+      "original": "27_南京旅游攻略.md",
+      "category": "旅游攻略",
+      "confidence": 0.6066666666666667,
+      "reason": "匹配关键词: 旅游, 旅行, 景点, 攻略, 交通",
+      "new_name": "旅游攻略-27_南京旅游攻略.md"
+    },
+    {
+      "original": "28_背水阵古战场.md",
+      "category": "历史文化",
+      "confidence": 0.4,
+      "reason": "匹配关键词: 历史, 春秋, 遗址, 古战场",
+      "new_name": "历史文化-28_背水阵古战场.md"
+    },
+    {
+      "original": "29_本溪赏枫攻略.md",
+      "category": "旅游攻略",
+      "confidence": 0.52,
+      "reason": "匹配关键词: 景点, 攻略, 出行, 路线, 自驾",
+      "new_name": "旅游攻略-29_本溪赏枫攻略.md"
+    },
+    {
+      "original": "30_宋宴与不时不食.md",
+      "category": "营养健康",
+      "confidence": 0.5,
+      "reason": "匹配关键词: 营养, 饮食, 食物, 水果, 养生",
+      "new_name": "营养健康-30_宋宴与不时不食.md"
+    },
+    {
+      "original": "31_湖南梅山文化旅游.md",
+      "category": "旅游攻略",
+      "confidence": 0.43333333333333335,
+      "reason": "匹配关键词: 旅游, 景点, 交通, 路线, 自驾",
+      "new_name": "旅游攻略-31_湖南梅山文化旅游.md"
+    },
+    {
+      "original": "32_中国内河航运图.md",
+      "category": "综合知识",
+      "confidence": 0.16000000000000003,
+      "reason": "匹配关键词: 数据, 分布图, 地图",
+      "new_name": "综合知识-32_中国内河航运图.md"
+    },
+    {
+      "original": "33_苏州阳澄湖旅游.md",
+      "category": "旅游攻略",
+      "confidence": 0.52,
+      "reason": "匹配关键词: 旅游, 景点, 交通, 民宿, 美食",
+      "new_name": "旅游攻略-33_苏州阳澄湖旅游.md"
+    },
+    {
+      "original": "34_巴蜀成渝环线游.md",
+      "category": "旅游攻略",
+      "confidence": 0.6933333333333334,
+      "reason": "匹配关键词: 旅游, 景点, 美食, 打卡, 行程",
+      "new_name": "旅游攻略-34_巴蜀成渝环线游.md"
+    },
+    {
+      "original": "35_大别山岳西自驾.md",
+      "category": "旅游攻略",
+      "confidence": 0.52,
+      "reason": "匹配关键词: 景点, 打卡, 路线, 自驾, 自驾游",
+      "new_name": "旅游攻略-35_大别山岳西自驾.md"
+    },
+    {
+      "original": "36_杭州永昌臭豆腐.md",
+      "category": "历史文化",
+      "confidence": 0.4,
+      "reason": "匹配关键词: 历史, 文化, 三国, 传统",
+      "new_name": "历史文化-36_杭州永昌臭豆腐.md"
+    },
+    {
+      "original": "37_红河州旅游攻略.md",
+      "category": "旅游攻略",
+      "confidence": 0.6933333333333334,
+      "reason": "匹配关键词: 旅游, 景点, 攻略, 美食, 行程",
+      "new_name": "旅游攻略-37_红河州旅游攻略.md"
+    },
+    {
+      "original": "38_广东港口分布图.md",
+      "category": "综合知识",
+      "confidence": 0.10666666666666667,
+      "reason": "匹配关键词: 数据, 分布图",
+      "new_name": "综合知识-38_广东港口分布图.md"
+    },
+    {
+      "original": "39_中国文化遗产遗址.md",
+      "category": "历史文化",
+      "confidence": 0.8,
+      "reason": "匹配关键词: 历史, 文化, 古代, 战国, 传统",
+      "new_name": "历史文化-39_中国文化遗产遗址.md"
+    },
+    {
+      "original": "40_滇东南反向游.md",
+      "category": "旅游攻略",
+      "confidence": 0.78,
+      "reason": "匹配关键词: 旅游, 景点, 攻略, 交通, 美食",
+      "new_name": "旅游攻略-40_滇东南反向游.md"
+    },
+    {
+      "original": "41_汕头美食攻略.md",
+      "category": "旅游攻略",
+      "confidence": 0.3466666666666667,
+      "reason": "匹配关键词: 攻略, 出行, 交通, 美食",
+      "new_name": "旅游攻略-41_汕头美食攻略.md"
+    },
+    {
+      "original": "42_青海旅游攻略.md",
+      "category": "旅游攻略",
+      "confidence": 0.78,
+      "reason": "匹配关键词: 旅游, 旅行, 景点, 攻略, 交通",
+      "new_name": "旅游攻略-42_青海旅游攻略.md"
+    },
+    {
+      "original": "43_邯郸旅游攻略.md",
+      "category": "旅游攻略",
+      "confidence": 0.52,
+      "reason": "匹配关键词: 旅游, 景点, 攻略, 交通, 行程",
+      "new_name": "旅游攻略-43_邯郸旅游攻略.md"
+    },
+    {
+      "original": "44_石家庄周边游.md",
+      "category": "旅游攻略",
+      "confidence": 0.78,
+      "reason": "匹配关键词: 旅游, 景点, 攻略, 交通, 酒店",
+      "new_name": "旅游攻略-44_石家庄周边游.md"
+    },
+    {
+      "original": "45_厦门美食攻略.md",
+      "category": "旅游攻略",
+      "confidence": 0.26,
+      "reason": "匹配关键词: 攻略, 美食, 打卡",
+      "new_name": "旅游攻略-45_厦门美食攻略.md"
+    },
+    {
+      "original": "46_定州旅游攻略.md",
+      "category": "旅游攻略",
+      "confidence": 0.6066666666666667,
+      "reason": "匹配关键词: 旅游, 景点, 攻略, 交通, 打卡",
+      "new_name": "旅游攻略-46_定州旅游攻略.md"
+    },
+    {
+      "original": "47_宝宝辅食与育儿.md",
+      "category": "教育育儿",
+      "confidence": 0.5,
+      "reason": "匹配关键词: 育儿, 宝宝, 辅食, 亲子, 妈妈",
+      "new_name": "教育育儿-47_宝宝辅食与育儿.md"
+    },
+    {
+      "original": "48_西北大环线攻略.md",
+      "category": "旅游攻略",
+      "confidence": 0.78,
+      "reason": "匹配关键词: 旅游, 景点, 攻略, 交通, 打卡",
+      "new_name": "旅游攻略-48_西北大环线攻略.md"
+    },
+    {
+      "original": "49_旅行实用信息.md",
+      "category": "旅游攻略",
+      "confidence": 0.78,
+      "reason": "匹配关键词: 旅行, 攻略, 交通, 美食, 打卡",
+      "new_name": "旅游攻略-49_旅行实用信息.md"
+    }
+  ]
+}

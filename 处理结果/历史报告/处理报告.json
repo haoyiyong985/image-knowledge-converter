@@ -1,0 +1,40 @@
+{
+  "timestamp": "2026-04-10T09:13:08.148649",
+  "version": "V7.0",
+  "mode": "test",
+  "total_images": 4,
+  "processed_successfully": 3,
+  "failed": 1,
+  "duplicates_skipped": 1,
+  "new_documents": 1,
+  "merged_documents": 1,
+  "markdown_files": 2,
+  "word_files": 1,
+  "elapsed_seconds": 10.0,
+  "category_stats": {
+    "历史文化": 2
+  },
+  "results": [
+    {
+      "image": "a.jpg",
+      "category": "历史文化",
+      "is_duplicate": false,
+      "is_new_doc": true
+    },
+    {
+      "image": "b.jpg",
+      "category": "历史文化",
+      "is_duplicate": false,
+      "is_new_doc": false
+    },
+    {
+      "image": "c.jpg",
+      "category": "营养健康",
+      "is_duplicate": true
+    },
+    {
+      "image": "d.jpg",
+      "failed": true
+    }
+  ]
+}
