@@ -100,7 +100,7 @@
 
 4. **运行处理**
    ```bash
-   python auto_process_all_v7.py
+   python auto_process_all_v9_4.py
    ```
 
 ---
@@ -120,7 +120,7 @@ D:\新建文件夹\
 │   ├── 历史文化-钱谦益传.docx
 │   ├── 历史文化-钱谦益传.md
 │   └── ...
-├── auto_process_all_v7.py  ← 主处理脚本
+├── auto_process_all_v9_4.py  ← 主处理脚本
 ├── ima_sync.py              ← IMA 同步脚本
 └── ima_config.txt           ← IMA API 凭证配置
 ```
@@ -290,17 +290,17 @@ AI 会自动完成：
 
 如果处理中断，可以恢复：
 ```bash
-python auto_process_all_v6.py --batch
+python auto_process_all_v9_4.py --batch
 ```
 
 查看进度：
 ```bash
-python auto_process_all_v6.py --progress
+python auto_process_all_v9_4.py --progress
 ```
 
 清除状态：
 ```bash
-python auto_process_all_v6.py --clear
+python auto_process_all_v9_4.py --clear
 ```
 
 ---
@@ -318,7 +318,7 @@ python auto_process_all_v6.py --clear
 
 **解决**：
 - 文档命名格式：`{分类}-{主题}`
-- 如需自定义，可修改 `auto_process_all_v7.py` 中的命名规则
+- 如需自定义，可修改 `auto_process_all_v9_4.py` 中的命名规则
 
 ### Q3：如何避免重复内容？
 
@@ -362,8 +362,8 @@ python auto_process_all_v6.py --clear
 
 | 文件 | 说明 |
 |------|------|
-| `auto_process_all_v7.py` | 当前最新版本（V9.5 逻辑） |
-| `auto_process_all_v6.py` | 分批处理版本 |
+| `auto_process_all_v9_4.py` | 当前最新版本（V9.5 逻辑） |
+| `auto_process_all_v9_4.py` | 分批处理版本 |
 | `ima_sync.py` | IMA 同步脚本 |
 | `classifier_engine.py` | 分类引擎 |
 
