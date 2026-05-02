@@ -252,6 +252,27 @@ AI 会自动完成：
 
 ---
 
+---
+
+## 📸 效果展示
+
+### 工作流程
+![工作流程](assets/screenshots/workflow.svg)
+
+*图片知识库转化工具的处理流程：从放入图片到生成文档的完整过程*
+
+### 处理前（原始截图）
+![处理前](assets/screenshots/A_cluttered_phone_screenshot_f_2026-05-02T10-36-02.png)
+
+*处理前的原始截图文件夹，内容杂乱无章*
+
+### 处理完（生成的文档）
+![处理完](assets/screenshots/A_clean_organized_document_fol_2026-05-02T10-36-47.png)
+
+*处理完的文档文件夹，按分类整齐排列，Word + Markdown 双格式输出*
+
+---
+
 ## 🔧 高级功能
 
 ### 分批处理
