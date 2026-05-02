@@ -55,6 +55,8 @@ tmp/
 # 打包输出
 dist/
 *.zip
+!image-knowledge-converter_*.zip
+!图片知识库整理工具_分享包_*.zip
 *.tar.gz
 *.tar
 

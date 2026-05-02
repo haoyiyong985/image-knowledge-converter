@@ -57,7 +57,7 @@
 2. **导入到 WorkBuddy**
    - 打开 WorkBuddy → 点击右上角头像 → **Skills 管理**
    - 点击「导入 Skills」
-   - 选择 `dist/image-knowledge-converter_*.zip`
+   - 选择 `image-knowledge-converter_*.zip` 或 `图片知识库整理工具_分享包_*.zip`
    - 点击「立即导入」
 
 3. **初始化知识库**
