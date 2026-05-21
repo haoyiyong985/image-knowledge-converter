@@ -69,6 +69,12 @@ backup_*/
 test_output/
 test_images/
 
+# 处理结果文件（非项目文档）
+docs/*处理结果*
+
+# references（已合并到 README）
+references/
+
 # 腾讯云和百度云 SDK
 tencentcloud_sdk/
 baidu_sdk/
