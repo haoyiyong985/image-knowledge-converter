@@ -3,6 +3,7 @@
 .env.local
 ocr_config.json
 ima_config.txt
+config/api_keys.yaml
 
 # Python
 __pycache__/

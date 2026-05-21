@@ -17,8 +17,8 @@ processing_mode: auto
 # 是否启用状态管理（断点续传）
 enable_state_management: true
 
-# 状态文件保存位置
-state_file: ".workbuddy/memory/batch_state.json"
+# 状态文件保存位置（V9.5 使用相对路径）
+state_file: "batch_state.json"
 
 # 是否自动归档
 auto_archive: true

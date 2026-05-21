@@ -1,6 +1,10 @@
 # 分类配置文件
 # 图片知识库转化工具 - 可配置分类系统
-# 
+#
+# ⚠️ V9.5 注意：主脚本使用 LLM 动态分类，此文件中的关键词匹配规则
+# 不再被主脚本直接使用。LLM 会优先复用已有目录的分类名。
+# 此文件保留仅供参考，或供旧版脚本使用。
+#
 # 使用说明：
 # - id: 分类唯一标识符（英文，用于代码引用）
 # - name: 分类显示名称（中文）
@@ -247,14 +251,15 @@ categories:
     enabled: true
     description: "蔬菜种植、花草养护、园艺技巧"
 
-# 默认分类配置
+# 默认分类配置（V9.5 已删除"综合知识"兜底）
+# 不再强制归类，LLM 自由命名新门类
 fallback:
-  # 无法分类时的默认分类ID
-  default_category_id: "misc"
-  # 无法分类时的默认文档
-  default_document: "50_综合知识.md"
-  # 最低置信度阈值（低于此值使用默认分类）
-  min_confidence: 0.3
+  # 无法分类时的默认分类ID（V9.5 已禁用）
+  default_category_id: null
+  # 无法分类时的默认文档（V9.5 已禁用）
+  default_document: null
+  # 最低置信度阈值（V9.5 已禁用）
+  min_confidence: 0.0
 
 # 分类匹配配置
 matching:

@@ -40,11 +40,34 @@ import hashlib
 import shutil
 import logging
 import requests
+import argparse
 from pathlib import Path
 from datetime import datetime
 from collections import Counter
 from typing import Optional, List, Dict, Tuple
 from dataclasses import dataclass
+
+# ============================================================
+# 全局工作目录变量（支持命令行参数或环境变量指定）
+# ============================================================
+def _get_work_dir() -> Path:
+    """获取工作目录（优先级：命令行参数 > 环境变量 > 脚本自身目录）"""
+    # 1. 命令行参数已在 main() 中解析到全局变量
+    if hasattr(sys, '_work_dir') and sys._work_dir:
+        return Path(sys._work_dir)
+    # 2. 环境变量
+    env_work_dir = os.environ.get('WORK_DIR', '')
+    if env_work_dir and os.path.isdir(env_work_dir):
+        return Path(env_work_dir)
+    # 3. 兜底：脚本自身目录（保持向后兼容）
+    return Path(__file__).parent
+
+# 全局工作目录（尽早初始化，供其他模块使用）
+WORK_DIR = _get_work_dir()
+
+# 日志和输出目录（基于工作目录）
+LOG_OUTPUT_DIR = WORK_DIR / '处理结果'
+LOG_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
 # 修复 Windows 控制台编码
 if sys.platform == 'win32':
@@ -61,9 +84,13 @@ env_path = Path('.') / '.env'
 if env_path.exists():
     load_dotenv(dotenv_path=env_path)
 else:
-    print("[WARN] .env 文件不存在，使用系统环境变量")
+    print("[INFO] .env 文件不存在，使用 config/api_keys.yaml 配置（正常）")
 
-from local_ocr import LocalOCR
+try:
+    from local_ocr import LocalOCR
+    LOCAL_OCR_AVAILABLE = True
+except ImportError:
+    LOCAL_OCR_AVAILABLE = False
 
 try:
     from tencent_ocr import TencentOCR
@@ -77,13 +104,12 @@ try:
 except ImportError:
     BAIDU_AVAILABLE = False
 
-# 日志配置
-Path('处理结果').mkdir(exist_ok=True)
+# 日志配置（使用工作目录）
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(message)s',
     handlers=[
-        logging.FileHandler('处理结果/process.log', encoding='utf-8'),
+        logging.FileHandler(str(LOG_OUTPUT_DIR / 'process.log'), encoding='utf-8'),
         logging.StreamHandler()
     ]
 )
@@ -96,6 +122,54 @@ PRESET_CATEGORIES = [
     # 注：不再包含"综合知识"和"其他"，LLM遇到新门类应自由命名
     # "其他"仅在分类名无效时作最终兜底
 ]
+
+# ============================================================
+# 首次使用检测（新手向导引导）
+# ============================================================
+def check_first_run():
+    """
+    检测是否首次使用，如果未配置则提示运行向导。
+    返回 True 表示已配置，可以继续；返回 False 表示需要配置。
+    """
+    config_path = WORK_DIR / 'config' / 'api_keys.yaml'
+    
+    if not config_path.exists():
+        print("\n" + "="*60)
+        print("  🆕 检测到你是第一次使用本工具！")
+        print("="*60)
+        print("\n  为了让工具正常工作，你需要先完成配置（约 2 分钟）。")
+        print("\n  请运行新手向导：")
+        print("    python setup_wizard.py")
+        print("\n  向导会帮你：")
+        print("    1. 选择工作文件夹")
+        print("    2. 配置 OCR 识别服务（腾讯云/百度云）")
+        print("    3. 自动创建文件夹结构")
+        print("\n  配置完成后，再运行本脚本即可。")
+        print("\n  " + "="*50)
+        print("  💡 提示：如果你有 WorkBuddy，也可以直接导入 Skill")
+        print("         然后说「第一次使用」即可启动向导。")
+        print("="*60 + "\n")
+        return False
+    
+    # 检查配置文件是否有内容
+    try:
+        import yaml
+        with open(config_path, 'r', encoding='utf-8') as f:
+            config = yaml.safe_load(f)
+            if not config or 'ocr' not in config:
+                print("\n" + "="*60)
+                print("  ⚠️  配置文件存在但内容不完整！")
+                print("="*60)
+                print("\n  请重新运行向导来修复配置：")
+                print("    python setup_wizard.py")
+                print("")
+                return False
+    except Exception as e:
+        print(f"\n  ⚠️  配置文件读取失败：{e}")
+        print("  请重新运行向导：python setup_wizard.py\n")
+        return False
+    
+    return True
 
 
 # ============================================================
@@ -117,6 +191,69 @@ class LLMAnalyzer:
         self._kimi_available = None
         self._doubao_available = None
         self.cache = {}
+        
+        # 加载配置文件（优先级：.env > config/api_keys.yaml）
+        self._load_config()
+        
+    def _load_config(self):
+        """加载配置文件，将配置设置为环境变量（确保 os.getenv() 能读取）"""
+        try:
+            import yaml
+            config_path = WORK_DIR / 'config' / 'api_keys.yaml'
+            if config_path.exists():
+                with open(config_path, 'r', encoding='utf-8') as f:
+                    config = yaml.safe_load(f)
+                    if config:
+                        # ── LLM 配置 ──────────────────────────
+                        # 注意：api_keys.yaml 中 LLM 配置在 llm 子字典下
+                        if 'llm' in config:
+                            llm_cfg = config['llm']
+                            # yaml 写 kimi_api_key，环境变量用 MOONSHOT_API_KEY
+                            llm_mapping = {
+                                'kimi_api_key': 'MOONSHOT_API_KEY',
+                                'doubao_api_key': 'DOUBAO_API_KEY',
+                                'doubao_base_url': 'DOUBAO_BASE_URL',
+                                'doubao_model': 'DOUBAO_MODEL',
+                                'siliconflow_api_key': 'SILICONFLOW_API_KEY',
+                                'siliconflow_base_url': 'SILICONFLOW_BASE_URL',
+                                'siliconflow_model': 'SILICONFLOW_MODEL',
+                                'hunyuan_api_key': 'HUNYUAN_API_KEY',
+                            }
+                            for yaml_key, env_key in llm_mapping.items():
+                                val = llm_cfg.get(yaml_key, '')
+                                if val and '替换' not in str(val):
+                                    if not os.getenv(env_key):
+                                        os.environ[env_key] = str(val)
+
+                        # ── IMA 配置 ─────────────────────────
+                        if 'ima' in config:
+                            ima_cfg = config['ima']
+                            if ima_cfg.get('api_key') and '填入' not in str(ima_cfg.get('api_key', '')):
+                                if not os.getenv('IMA_OPENAPI_APIKEY'):
+                                    os.environ['IMA_OPENAPI_APIKEY'] = str(ima_cfg['api_key'])
+                            if ima_cfg.get('client_id') and '填入' not in str(ima_cfg.get('client_id', '')):
+                                if not os.getenv('IMA_OPENAPI_CLIENTID'):
+                                    os.environ['IMA_OPENAPI_CLIENTID'] = str(ima_cfg['client_id'])
+
+                        # ── OCR 配置 ─────────────────────────
+                        if 'ocr' in config:
+                            ocr_cfg = config['ocr']
+                            if ocr_cfg.get('tencent', {}).get('secret_id') and '填入' not in str(ocr_cfg['tencent'].get('secret_id', '')):
+                                if not os.getenv('TENCENT_SECRET_ID'):
+                                    os.environ['TENCENT_SECRET_ID'] = str(ocr_cfg['tencent']['secret_id'])
+                            if ocr_cfg.get('tencent', {}).get('secret_key') and '填入' not in str(ocr_cfg['tencent'].get('secret_key', '')):
+                                if not os.getenv('TENCENT_SECRET_KEY'):
+                                    os.environ['TENCENT_SECRET_KEY'] = str(ocr_cfg['tencent']['secret_key'])
+                            if ocr_cfg.get('baidu', {}).get('api_key') and '填入' not in str(ocr_cfg['baidu'].get('api_key', '')):
+                                if not os.getenv('BAIDU_API_KEY'):
+                                    os.environ['BAIDU_API_KEY'] = str(ocr_cfg['baidu']['api_key'])
+                            if ocr_cfg.get('baidu', {}).get('secret_key') and '填入' not in str(ocr_cfg['baidu'].get('secret_key', '')):
+                                if not os.getenv('BAIDU_SECRET_KEY'):
+                                    os.environ['BAIDU_SECRET_KEY'] = str(ocr_cfg['baidu']['secret_key'])
+
+                        logger.info("[Config] 配置文件加载完成")
+        except Exception as e:
+            logger.warning(f"[LLM] 加载配置文件失败: {e}")
 
     # ---------- LLM引擎 ----------
 
@@ -168,59 +305,127 @@ class LLMAnalyzer:
         return self._doubao_available
 
     def _call_hunyuan_lite(self, prompt: str) -> Optional[str]:
-        """调用腾讯混元Lite"""
+        """调用腾讯混元Lite（REST API，无需SDK）"""
         try:
-            from tencentcloud.hunyuan.v20230901 import hunyuan_client, models as hm_models
-            from tencentcloud.common.exception.tencent_cloud_sdk_exception import TencentCloudSDKException
-            from tencentcloud.common.profile.client_profile import ClientProfile
-            from tencentcloud.common.profile.http_profile import HttpProfile
-            from tencentcloud.common.credential import Credential
+            import hashlib
+            import hmac
+            import time
 
             sid = os.getenv('TENCENT_SECRET_ID', '')
             skey = os.getenv('TENCENT_SECRET_KEY', '')
             if not sid or not skey or '替换' in skey:
                 return None
 
-            hp = HttpProfile()
-            hp.endpoint = "hunyuan.tencentcloudapi.com"
-            hp.reqTimeout = 10
-            cp = ClientProfile()
-            cp.httpProfile = hp
-            client = hunyuan_client.HunyuanClient(Credential(sid, skey), "ap-guangzhou", cp)
+            # 腾讯云 API 签名认证
+            secret_id = sid
+            secret_key = skey
+            service = "hunyuan"
+            host = "hunyuan.tencentcloudapi.com"
+            version = "2023-09-01"
+            action = "ChatCompletions"
+            algorithm = "TC3-HMAC-SHA256"
 
-            req = hm_models.ChatCompletionsRequest()
-            req.Model = "hunyuan-lite"
-            req.Messages = [{"Role": "user", "Content": prompt}]
-            req.Stream = False
+            # 时间戳（UTC）
+            timestamp = int(time.time())
+            date = time.strftime("%Y-%m-%d", time.gmtime(timestamp))
 
-            resp = client.ChatCompletions(req)
-            return resp.Choices[0].Message.Content.strip()
+            # 拼接正文
+            payload = {
+                "Model": "hunyuan-lite",
+                "Messages": [{"Role": "user", "Content": prompt}],
+                "Stream": False
+            }
+            payload_str = json.dumps(payload)
 
-        except ImportError:
-            logger.info("[LLM] 混元SDK未安装")
-            return None
-        except TencentCloudSDKException as e:
-            code = getattr(e, 'code', '')
-            if 'ServiceNotActivated' in code:
-                logger.info("[LLM] 混元Lite服务未开通")
-            elif 'UnauthorizedOperation' in code:
-                logger.info("[LLM] 混元Lite CAM权限不足")
+            # HTTP 相关
+            http_request_method = "POST"
+            canonical_uri = "/"
+            canonical_querystring = ""
+            # 关键：content-type 必须包含 charset=utf-8
+            content_type = "application/json; charset=utf-8"
+
+            # 步骤 1：拼接规范请求串（CanonicalRequest）
+            # 格式：HTTPRequestMethod + '\n' + CanonicalURI + '\n' + CanonicalQueryString + '\n' + CanonicalHeaders + '\n' + SignedHeaders + '\n' + HashedRequestPayload
+            hashed_request_payload = hashlib.sha256(payload_str.encode("utf-8")).hexdigest()
+            # 关键：CanonicalHeaders 必须包含 x-tc-action
+            canonical_headers = f"content-type:{content_type}\nhost:{host}\nx-tc-action:{action.lower()}\n"
+            signed_headers = "content-type;host;x-tc-action"
+            canonical_request = (
+                f"{http_request_method}\n"
+                f"{canonical_uri}\n"
+                f"{canonical_querystring}\n"
+                f"{canonical_headers}\n"
+                f"{signed_headers}\n"
+                f"{hashed_request_payload}"
+            )
+
+            # 步骤 2：拼接待签名字符串（StringToSign）
+            credential_scope = f"{date}/{service}/tc3_request"
+            hashed_canonical_request = hashlib.sha256(canonical_request.encode("utf-8")).hexdigest()
+            string_to_sign = (
+                f"{algorithm}\n"
+                f"{timestamp}\n"
+                f"{credential_scope}\n"
+                f"{hashed_canonical_request}"
+            )
+
+            # 步骤 3：计算签名
+            secret_date = hmac.new(("TC3" + secret_key).encode("utf-8"), date.encode("utf-8"), hashlib.sha256).digest()
+            secret_service = hmac.new(secret_date, service.encode("utf-8"), hashlib.sha256).digest()
+            secret_signing = hmac.new(secret_service, "tc3_request".encode("utf-8"), hashlib.sha256).digest()
+            signature = hmac.new(secret_signing, string_to_sign.encode("utf-8"), hashlib.sha256).hexdigest()
+
+            # 步骤 4：拼接 Authorization
+            authorization = (
+                f"{algorithm} "
+                f"Credential={secret_id}/{credential_scope}, "
+                f"SignedHeaders={signed_headers}, "
+                f"Signature={signature}"
+            )
+
+            # 发送请求
+            headers = {
+                "Authorization": authorization,
+                "Content-Type": content_type,
+                "Host": host,
+                "X-TC-Action": action,
+                "X-TC-Timestamp": str(timestamp),
+                "X-TC-Version": version,
+                "X-TC-Region": "ap-guangzhou"
+            }
+
+            resp = requests.post(f"https://{host}", data=payload_str, headers=headers, timeout=30)
+            if resp.status_code == 200:
+                result = resp.json()
+                if 'Response' in result and 'Choices' in result['Response']:
+                    return result['Response']['Choices'][0]['Message']['Content'].strip()
+                elif 'Response' in result and 'Error' in result['Response']:
+                    code = result['Response']['Error'].get('Code', '')
+                    msg = result['Response']['Error'].get('Message', '')
+                    logger.info(f"[LLM] 混元Lite API错误: {code} - {msg}")
+                    return None
             else:
-                logger.info(f"[LLM] 混元Lite异常: {code}")
+                logger.info(f"[LLM] 混元Lite HTTP错误: {resp.status_code} - {resp.text[:200]}")
             return None
+
         except Exception as e:
             logger.info(f"[LLM] 混元Lite调用失败: {e}")
             return None
 
     def _call_siliconflow(self, prompt: str) -> Optional[str]:
-        """调用硅基流动"""
+        """调用硅基流动（兼容OpenAI格式，支持自定义 base_url）"""
         try:
             api_key = os.getenv('SILICONFLOW_API_KEY', '')
             if not api_key or '替换' in api_key:
                 return None
-            url = "https://api.siliconflow.cn/v1/chat/completions"
+            
+            # 读取 base_url（从环境变量，_load_config 已加载配置文件）
+            base_url = os.getenv('SILICONFLOW_BASE_URL', 'https://api.siliconflow.cn/v1')
+            model = os.getenv('SILICONFLOW_MODEL', 'Qwen/Qwen3-8B')
+            
+            url = f"{base_url}/chat/completions"
             resp = requests.post(url, json={
-                "model": os.getenv('SILICONFLOW_MODEL', 'Qwen/Qwen3-8B'),
+                "model": model,
                 "messages": [{"role": "user", "content": prompt}],
                 "max_tokens": 300, "temperature": 0.3
             }, headers={
@@ -229,7 +434,9 @@ class LLMAnalyzer:
             }, timeout=30)  # 增加超时到30秒
             if resp.status_code == 200:
                 return resp.json().get('choices', [{}])[0].get('message', {}).get('content', '').strip()
-            return None
+            else:
+                logger.info(f"[LLM] 硅基流动返回状态码 {resp.status_code}")
+                return None
         except Exception as e:
             logger.info(f"[LLM] 硅基流动失败: {e}")
             return None
@@ -298,7 +505,7 @@ class LLMAnalyzer:
         full_text = text[:1200].strip()
 
         # V9.5：动态读取已有分类目录，作为LLM参考（而非硬约束）
-        output_dir = Path(__file__).parent / "处理结果"
+        output_dir = WORK_DIR / "处理结果"
         existing_categories = []
         if output_dir.exists():
             existing_categories = sorted([
@@ -487,16 +694,31 @@ class LLMAnalyzer:
         return {'title': title, 'category': category, 'summary': summary}
 
     def _fallback_extract(self, text: str) -> Dict:
-        """V2风格兜底：提取标题 + 关键词推断分类"""
+        """
+        P1-5: 改进后备标题生成逻辑
+        V2风格兜底：更智能地提取标题 + 关键词推断分类
+        """
         lines = [l.strip() for l in text.split('\n') if l.strip() and len(l.strip()) >= 3]
-
-        # 取前8行中第一个有意义的短句
+        
+        # 噪点词
         noise_words = {'http', 'www', '关注', '收藏', '点赞', '评论', '分享', '发送',
                        '翻译', '探索版', '写作', 'doubao', 'kimi', '元宝', '豆包',
                        '一张图看完', 'AI生成', '内容由'}
-
+        
+        # P1-5: 改进1 - 扩大搜索范围（前20行）
+        search_lines = lines[:20]
+        
         title = ''
-        for line in lines[:8]:
+        
+        # P1-5: 改进2 - 优先级1：包含语义关键词的行
+        heading_keywords = ['功效', '作用', '做法', '做法步骤', '材料', '食材', '原料',
+                         '禁忌', '注意事项', '副作用', '不宜',
+                         '症状', '表现', '诊断', '治疗', '预防', '调理',
+                         '营养价值', '营养成分', '适用人群', '食用方法',
+                         '生长习性', '种植方法', '栽培技术',
+                         '人物简介', '生平', '人物志', '历史背景', '主要成就']
+        
+        for line in search_lines:
             cleaned = re.sub(r'^#{1,6}\s*', '', line)
             cleaned = re.sub(r'^[◆★▼▪▸【】\[\]]+\s*', '', cleaned).strip()
             if not cleaned:
@@ -505,16 +727,98 @@ class LLMAnalyzer:
                 continue
             if re.match(r'^[\d:.\s%]+$', cleaned):
                 continue
-            if 3 <= len(cleaned) <= 15 and re.match(r'^[\u4e00-\u9fa5]+$', cleaned):
-                title = cleaned
+            # 包含语义关键词 → 优先作为标题
+            if any(kw in cleaned for kw in heading_keywords):
+                title = cleaned[:20]  # 限制长度
                 break
-
+        
+        # P1-5: 改进3 - 优先级2：如果没有语义关键词，选择最长有意义行
         if not title:
-            title = f"整理{datetime.now().strftime('%m%d%H%M')}"
-
-        # 关键词推断分类（而非写死综合知识）
-        category = self._infer_category_by_keywords(text)
-        return {'title': title, 'category': category, 'summary': ''}
+            meaningful_lines = []
+            for line in search_lines:
+                cleaned = re.sub(r'^#{1,6}\s*', '', line)
+                cleaned = re.sub(r'^[◆★▼▪▸【】\[\]]+\s*', '', cleaned).strip()
+                if not cleaned:
+                    continue
+                if any(noise in cleaned for noise in noise_words):
+                    continue
+                if re.match(r'^[\d:.\s%]+$', cleaned):
+                    continue
+                # 3-20字的中文内容
+                if 3 <= len(cleaned) <= 20 and re.search(r'[\u4e00-\u9fa5]', cleaned):
+                    meaningful_lines.append(cleaned)
+            
+            if meaningful_lines:
+                # 选择最长的一行作为标题
+                title = max(meaningful_lines, key=len)[:20]
+        
+        # P1-5: 改进4 - 优先级3：提取第一句有意义的话
+        if not title:
+            for line in search_lines:
+                cleaned = re.sub(r'^#{1,6}\s*', '', line)
+                cleaned = re.sub(r'^[◆★▼▪▸【】\[\]]+\s*', '', cleaned).strip()
+                if not cleaned:
+                    continue
+                if any(noise in cleaned for noise in noise_words):
+                    continue
+                if re.search(r'[\u4e00-\u9fa5]{3,}', cleaned):  # 至少3个连续汉字
+                    title = cleaned[:20]
+                    break
+        
+        # P1-5: 改进5 - 最后兜底：使用时间戳+内容前8字
+        if not title:
+            content_preview = re.sub(r'\s+', ' ', text[:50]).strip()
+            if len(content_preview) > 8:
+                title = f"整理{datetime.now().strftime('%m%d%H%M')}-{content_preview[:8]}"
+            else:
+                title = f"整理{datetime.now().strftime('%m%d%H%M')}"
+        
+        # P1-5: 改进6 - 更智能的分类推断（增加置信度）
+        category, confidence = self._infer_category_by_keywords_v2(text)
+        
+        if confidence < 0.3:
+            logger.info(f"[后备标题] 分类置信度低({confidence:.0%})，标记为待人工审核")
+            category = f"{category}(待审核)"
+        
+        return {'title': title, 'category': category, 'summary': '', '_confidence': confidence}
+    
+    def _infer_category_by_keywords_v2(self, text: str) -> Tuple[str, float]:
+        """
+        P1-5: 改进6 - 更智能的分类推断（返回分类+置信度）
+        """
+        cat_keywords = {
+            "历史文化": ["历史", "朝代", "皇帝", "皇后", "太后", "太子", "王朝", "诸侯",
+                         "古代", "传记", "人物", "将领", "战役", "文化", "典故", "世家",
+                         "门阀", "宰相", "藩王", "大臣", "年号", "庙号", "谥号",
+                         "明朝", "清朝", "宋朝", "唐朝", "汉朝", "元朝", "周朝", "秦朝",
+                         "北宋", "南宋", "东汉", "西汉", "五代", "春秋", "战国",
+                         "钱谦益", "钱穆", "明末", "淮盐", "诸侯国", "始封"],
+            "营养健康": ["营养", "健康", "饮食", "中医", "养生", "药膳", "食疗", "免疫",
+                         "调理", "滋补", "中药", "穴位", "经络", "茶饮", "功效"],
+            "生活方式": ["生活", "运动", "睡眠", "心理", "习惯", "健身", "护肤",
+                         "整理", "收纳", "时间管理", "效率"],
+            "教育育儿": ["育儿", "宝宝", "教育", "孩子", "亲子", "学习", "学校",
+                         "辅食", "早教", "发育", "成长"],
+            "旅游攻略": ["旅游", "旅行", "景点", "攻略", "路线", "酒店", "美食",
+                         "打卡", "民宿", "自驾", "行程"],
+            "摄影技巧": ["摄影", "拍摄", "相机", "镜头", "光圈", "快门", "曝光",
+                         "ISO", "白平衡", "对焦", "构图", "摄影师"],
+        }
+        
+        text_lower = text[:800]  # 只看前800字
+        scores = {}
+        for cat, kws in cat_keywords.items():
+            score = sum(1 for kw in kws if kw in text_lower)
+            if score > 0:
+                scores[cat] = score / len(kws)  # 归一化得分
+        
+        if scores:
+            best = max(scores, key=scores.get)
+            confidence = scores[best]
+            logger.info(f"[分类] 关键词推断: {best}（置信度={confidence:.0%}）")
+            return best, confidence
+        
+        return '其他', 0.0  # V9.5：兜底改为"其他"，不再归入"综合知识"
 
     def _infer_category_by_keywords(self, text: str) -> str:
         """根据内容关键词推断分类（V9.5：仅用于LLM全失败时的降级兜底）"""
@@ -716,8 +1020,8 @@ class ContentOrganizer:
 class SmartDocumentManager:
     """文档管理器：合并检测 + MD/Word生成"""
 
-    def __init__(self, output_dir: str = '处理结果'):
-        self.output_dir = Path(output_dir)
+    def __init__(self, output_dir: str = None):
+        self.output_dir = Path(output_dir) if output_dir else (WORK_DIR / '处理结果')
         self.output_dir.mkdir(exist_ok=True)
         self.doc_index = {}
         self.known_topics = []
@@ -935,8 +1239,8 @@ class SmartDocumentManager:
 # 图片归档器
 # ============================================================
 class ImageArchiver:
-    def __init__(self, processed_dir: str = '已处理图片'):
-        self.processed_dir = Path(processed_dir)
+    def __init__(self, processed_dir: str = None):
+        self.processed_dir = Path(processed_dir) if processed_dir else (WORK_DIR / '已处理图片')
         self.processed_dir.mkdir(parents=True, exist_ok=True)
         self.archived_count = 0
 
@@ -1035,45 +1339,183 @@ class MultiEngineOCR:
     def __init__(self):
         self.current_engine = None
         self.engine_status = []
-
+        
         sid = os.getenv('TENCENT_SECRET_ID', '')
         skey = os.getenv('TENCENT_SECRET_KEY', '')
         self.engine_status.append(('腾讯云', bool(sid and skey and '替换' not in sid and TENCENT_AVAILABLE), '已配置' if sid else '未配置'))
-
-        aid = os.getenv('BAIDU_APP_ID', '')
+        
         ak = os.getenv('BAIDU_API_KEY', '')
         bs = os.getenv('BAIDU_SECRET_KEY', '')
-        self.engine_status.append(('百度云', bool(aid and ak and bs and '替换' not in aid and BAIDU_AVAILABLE), '已配置' if aid else '未配置'))
-
+        self.engine_status.append(('百度云', bool(ak and bs and '替换' not in ak and BAIDU_AVAILABLE), '已配置' if ak else '未配置'))
+        
         local = LocalOCR()
         self.engine_status.append(('本地Tesseract', local.tesseract_available, '可用' if local.tesseract_available else '不可用'))
-        self._select_best_engine()
-
-    def _select_best_engine(self):
-        for name, available, _ in self.engine_status:
-            if available:
-                self.current_engine = name
-                logger.info(f"[OCR] 选用引擎: {name}")
-                return True
-        return False
+        
+        # 记录所有已配置的引擎（用于日志）
+        self.available_engines = [name for name, available, _ in self.engine_status if available]
+        
+        if self.available_engines:
+            logger.info(f"[OCR] 已配置 {len(self.available_engines)} 个OCR引擎：{', '.join(self.available_engines)}")
+            logger.info(f"[OCR] 将按优先级依次尝试：{' → '.join(self.available_engines)}")
+        else:
+            logger.warning("[OCR] ⚠️ 没有已配置的OCR引擎！请运行 python setup_wizard.py 配置")
+        
+        # 不再需要 _select_best_engine()，recognize() 会自动降级
+    
+    def _assess_ocr_quality(self, text: str) -> Dict:
+        """
+        P1-4: OCR质量评估
+        返回质量评分和详细信息，帮助用户了解OCR识别效果
+        """
+        if not text or not text.strip():
+            return {
+                'score': 0,
+                'level': '差',
+                'reason': '识别结果为空',
+                'suggestions': ['检查图片是否清晰', '尝试更换OCR引擎', '确认图片包含文字内容']
+            }
+        
+        cleaned = text.strip()
+        total_chars = len(cleaned)
+        
+        # 1. 计算中文占比
+        chinese_chars = len(re.findall(r'[\u4e00-\u9fa5]', cleaned))
+        chinese_ratio = chinese_chars / max(total_chars, 1)
+        
+        # 2. 计算字母/数字占比（可能是噪点）
+        alphanumeric = len(re.findall(r'[a-zA-Z0-9]', cleaned))
+        alphanumeric_ratio = alphanumeric / max(total_chars, 1)
+        
+        # 3. 检查是否有意义的内容（连续中文字符）
+        has_chinese_words = bool(re.search(r'[\u4e00-\u9fa5]{2,}', cleaned))
+        
+        # 4. 检查常见OCR错误模式
+        ocr_error_patterns = ['口', '■', '□', '△', '▲', '○', '●']
+        error_count = sum(cleaned.count(p) for p in ocr_error_patterns)
+        error_ratio = error_count / max(total_chars, 1)
+        
+        # 5. 计算有效行数（非空且非噪点）
+        lines = [l.strip() for l in cleaned.split('\n') if l.strip()]
+        valid_lines = 0
+        for line in lines:
+            # 排除纯UI噪点行
+            if re.match(r'^\d{1,2}:\d{2}$', line):  # 时间
+                continue
+            if re.match(r'^[0-9]+%$', line):  # 百分比
+                continue
+            if len(line) >= 2:
+                valid_lines += 1
+        
+        # 综合评分（0-100）
+        score = 0
+        suggestions = []
+        
+        # 长度得分（30分）
+        if total_chars >= 100:
+            score += 30
+        elif total_chars >= 50:
+            score += 20
+        elif total_chars >= 20:
+            score += 10
+        else:
+            suggestions.append('识别文字较少，请检查图片质量')
+            
+        # 中文占比得分（40分）
+        if chinese_ratio >= 0.5:
+            score += 40
+        elif chinese_ratio >= 0.3:
+            score += 25
+        elif chinese_ratio >= 0.1:
+            score += 10
+        else:
+            suggestions.append('中文内容占比较低，可能识别不准确')
+            
+        # 有效内容得分（20分）
+        if has_chinese_words:
+            score += 20
+        else:
+            suggestions.append('未检测到连续中文字符，内容可能不准确')
+            
+        # 错误模式扣分
+        if error_ratio > 0.1:
+            score -= 10
+            suggestions.append('检测到可能的OCR识别错误字符')
+            
+        # 有效行数得分（10分）
+        if valid_lines >= 5:
+            score += 10
+        elif valid_lines >= 3:
+            score += 5
+            
+        # 确保分数在0-100之间
+        score = max(0, min(100, score))
+        
+        # 评定等级
+        if score >= 80:
+            level = '优'
+        elif score >= 60:
+            level = '良'
+        elif score >= 40:
+            level = '中'
+        else:
+            level = '差'
+            
+        return {
+            'score': score,
+            'level': level,
+            'reason': f'中文占比{chinese_ratio:.0%}，有效行数{valid_lines}，总长度{total_chars}',
+            'details': {
+                'total_chars': total_chars,
+                'chinese_chars': chinese_chars,
+                'chinese_ratio': round(chinese_ratio, 2),
+                'alphanumeric_ratio': round(alphanumeric_ratio, 2),
+                'valid_lines': valid_lines,
+                'has_chinese_words': has_chinese_words,
+                'error_ratio': round(error_ratio, 2),
+            },
+            'suggestions': suggestions if suggestions else ['OCR质量良好，可正常使用']
+        }
 
     def recognize(self, image_path: str) -> Dict:
-        for name, available, _ in self.engine_status:
+        """
+        OCR识别并评估质量（自动降级）
+        依次尝试所有已配置的OCR引擎，一个失败自动切换下一个
+        返回：{'success': bool, 'text': str, 'error': str, 'quality': dict}
+        """
+        last_error = '所有OCR引擎均失败'
+        
+        for name, available, status_str in self.engine_status:
             if not available:
+                logger.info(f"[OCR] 跳过 {name}（{status_str}）")
                 continue
+            
             try:
+                # 根据引擎名称创建实例
                 if name == '腾讯云' and TENCENT_AVAILABLE:
                     engine = TencentOCR()
                 elif name == '百度云' and BAIDU_AVAILABLE:
                     engine = BaiduOCR()
                 else:
                     engine = LocalOCR()
+                
+                # 尝试识别
                 result = engine.recognize(image_path)
                 if result and result.get('success'):
+                    # 评估OCR质量
+                    text = result.get('text', '')
+                    quality = self._assess_ocr_quality(text)
+                    result['quality'] = quality
+                    logger.info(f"[OCR] {name} 识别成功")
                     return result
+                else:
+                    logger.warning(f"[OCR] {name} 识别返回失败，尝试下一个引擎")
             except Exception as e:
-                logger.warning(f"[OCR] {name} 失败: {e}")
-        return {'success': False, 'error': '无可用OCR引擎', 'text': ''}
+                logger.warning(f"[OCR] {name} 异常: {e}，尝试下一个引擎")
+                last_error = str(e)
+                continue
+        
+        # 所有引擎都失败
+        return {'success': False, 'error': last_error, 'text': '', 'quality': None}
 
 
 # ============================================================
@@ -1084,13 +1526,19 @@ class IMASyncer:
         self.client_id = os.getenv('IMA_OPENAPI_CLIENTID', '')
         self.api_key = os.getenv('IMA_OPENAPI_APIKEY', '')
         self.base_url = 'https://ima.qq.com/openapi/note/v1'
-        self.enabled = bool(self.client_id and self.api_key and '填入' not in self.client_id)
-        self.sync_log_file = Path('处理结果/ima_sync_log.json')
+        # 需要 api_key 即可启用（client_id 可能为空但不影响基本功能）
+        self.enabled = bool(self.api_key and '填入' not in self.api_key)
+        self.sync_log_file = WORK_DIR / '处理结果/ima_sync_log.json'
         self.sync_log = self._load_sync_log()
         self.default_notebook_id = os.getenv('IMA_NOTEBOOK_ID', '')
         self.rate_limited = False
         self.synced_this_session = 0
         self.failed_this_session = 0
+        # 调试日志
+        if self.enabled:
+            logger.info("[IMA] 已启用（API Key 已配置）")
+        else:
+            logger.info("[IMA] 未启用（请在 config/api_keys.yaml 中配置 IMA API Key）")
 
     def _load_sync_log(self) -> Dict:
         if self.sync_log_file.exists():
@@ -1178,7 +1626,7 @@ class IMASyncer:
 # ============================================================
 # 分批处理
 # ============================================================
-_BATCH_DIR = Path(__file__).parent / 'progress'
+_BATCH_DIR = WORK_DIR / 'progress'
 BATCH_STATE_FILE = _BATCH_DIR / 'auto_batch_state.json'
 
 BATCH_CONFIG = {
@@ -1221,7 +1669,7 @@ class BatchManager:
         self.state_file.write_text(json.dumps(self.state, ensure_ascii=False, indent=2), encoding='utf-8')
 
     def initialize(self) -> Optional[Dict]:
-        source_dir = Path('待处理图片')
+        source_dir = WORK_DIR / '待处理图片'
         if not source_dir.exists():
             print("待处理图片目录不存在")
             return None
@@ -1458,8 +1906,8 @@ def save_report(results: List[Dict], total_images: int, elapsed: float, mode: st
         'results': [{k: v for k, v in r.items() if k not in ['md_file', 'docx_file']} for r in results if r]
     }
 
-    Path('处理结果').mkdir(exist_ok=True)
-    report_file = Path('处理结果/处理报告.json')
+    Path(LOG_OUTPUT_DIR).mkdir(exist_ok=True)
+    report_file = Path(LOG_OUTPUT_DIR) / '处理报告.json'
     with open(report_file, 'w', encoding='utf-8') as f:
         json.dump(report, f, ensure_ascii=False, indent=2)
     return report, report_file
@@ -1507,9 +1955,50 @@ def run_full_mode(batch_manager: BatchManager):
     print("合并策略：精确同名匹配（V9.3新）| LLM失败跳过不兜底（V9.3新）")
     print("=" * 60)
 
-    print("\n[初始化] OCR引擎...")
+    print("[初始化] 加载配置文件...")
+    _cfg_path = WORK_DIR / 'config' / 'api_keys.yaml'
+    if _cfg_path.exists():
+        import yaml as _yaml
+        with _cfg_path.open('r', encoding='utf-8') as _f:
+            _cfg = _yaml.safe_load(_f)
+            if _cfg:
+                _llm_map = {'siliconflow_api_key': 'SILICONFLOW_API_KEY',
+                            'siliconflow_base_url': 'SILICONFLOW_BASE_URL',
+                            'siliconflow_model': 'SILICONFLOW_MODEL',
+                            'moonshot_api_key': 'MOONSHOT_API_KEY',
+                            'doubao_api_key': 'DOUBAO_API_KEY',
+                            'doubao_base_url': 'DOUBAO_BASE_URL',
+                            'doubao_model': 'DOUBAO_MODEL'}
+                for _yk, _ek in _llm_map.items():
+                    if _yk in _cfg and _cfg[_yk] and '替换' not in str(_cfg[_yk]):
+                        if not os.getenv(_ek):
+                            os.environ[_ek] = str(_cfg[_yk])
+                if 'ima' in _cfg:
+                    _ic = _cfg['ima']
+                    if _ic.get('api_key') and '填入' not in str(_ic.get('api_key', '')):
+                        if not os.getenv('IMA_OPENAPI_APIKEY'):
+                            os.environ['IMA_OPENAPI_APIKEY'] = str(_ic['api_key'])
+                    if _ic.get('client_id') and '填入' not in str(_ic.get('client_id', '')):
+                        if not os.getenv('IMA_OPENAPI_CLIENTID'):
+                            os.environ['IMA_OPENAPI_CLIENTID'] = str(_ic['client_id'])
+                if 'ocr' in _cfg:
+                    _oc = _cfg['ocr']
+                    if _oc.get('tencent', {}).get('secret_id') and '填入' not in str(_oc['tencent'].get('secret_id', '')):
+                        if not os.getenv('TENCENT_SECRET_ID'):
+                            os.environ['TENCENT_SECRET_ID'] = str(_oc['tencent']['secret_id'])
+                    if _oc.get('tencent', {}).get('secret_key') and '填入' not in str(_oc['tencent'].get('secret_key', '')):
+                        if not os.getenv('TENCENT_SECRET_KEY'):
+                            os.environ['TENCENT_SECRET_KEY'] = str(_oc['tencent']['secret_key'])
+                    if _oc.get('baidu', {}).get('api_key') and '填入' not in str(_oc['baidu'].get('api_key', '')):
+                        if not os.getenv('BAIDU_API_KEY'):
+                            os.environ['BAIDU_API_KEY'] = str(_oc['baidu']['api_key'])
+                    if _oc.get('baidu', {}).get('secret_key') and '填入' not in str(_oc['baidu'].get('secret_key', '')):
+                        if not os.getenv('BAIDU_SECRET_KEY'):
+                            os.environ['BAIDU_SECRET_KEY'] = str(_oc['baidu']['secret_key'])
+
+    print("[初始化] OCR引擎...")
     ocr = MultiEngineOCR()
-    if not ocr.current_engine:
+    if not ocr.available_engines:
         print("错误: 没有可用的OCR引擎!")
         return
 
@@ -1528,7 +2017,7 @@ def run_full_mode(batch_manager: BatchManager):
     print("[初始化] 图片归档器...")
     archiver = ImageArchiver()
 
-    source_dir = Path('待处理图片')
+    source_dir = WORK_DIR / '待处理图片'
     if not source_dir.exists():
         print("错误: 待处理图片目录不存在!")
         return
@@ -1587,9 +2076,50 @@ def run_batch_mode(batch_manager: BatchManager):
 
     batch_manager.print_progress()
 
-    print("\n[初始化] OCR引擎...")
+    print("[初始化] 加载配置文件...")
+    _cfg_path = WORK_DIR / 'config' / 'api_keys.yaml'
+    if _cfg_path.exists():
+        import yaml as _yaml
+        with _cfg_path.open('r', encoding='utf-8') as _f:
+            _cfg = _yaml.safe_load(_f)
+            if _cfg:
+                _llm_map = {'siliconflow_api_key': 'SILICONFLOW_API_KEY',
+                            'siliconflow_base_url': 'SILICONFLOW_BASE_URL',
+                            'siliconflow_model': 'SILICONFLOW_MODEL',
+                            'moonshot_api_key': 'MOONSHOT_API_KEY',
+                            'doubao_api_key': 'DOUBAO_API_KEY',
+                            'doubao_base_url': 'DOUBAO_BASE_URL',
+                            'doubao_model': 'DOUBAO_MODEL'}
+                for _yk, _ek in _llm_map.items():
+                    if _yk in _cfg and _cfg[_yk] and '替换' not in str(_cfg[_yk]):
+                        if not os.getenv(_ek):
+                            os.environ[_ek] = str(_cfg[_yk])
+                if 'ima' in _cfg:
+                    _ic = _cfg['ima']
+                    if _ic.get('api_key') and '填入' not in str(_ic.get('api_key', '')):
+                        if not os.getenv('IMA_OPENAPI_APIKEY'):
+                            os.environ['IMA_OPENAPI_APIKEY'] = str(_ic['api_key'])
+                    if _ic.get('client_id') and '填入' not in str(_ic.get('client_id', '')):
+                        if not os.getenv('IMA_OPENAPI_CLIENTID'):
+                            os.environ['IMA_OPENAPI_CLIENTID'] = str(_ic['client_id'])
+                if 'ocr' in _cfg:
+                    _oc = _cfg['ocr']
+                    if _oc.get('tencent', {}).get('secret_id') and '填入' not in str(_oc['tencent'].get('secret_id', '')):
+                        if not os.getenv('TENCENT_SECRET_ID'):
+                            os.environ['TENCENT_SECRET_ID'] = str(_oc['tencent']['secret_id'])
+                    if _oc.get('tencent', {}).get('secret_key') and '填入' not in str(_oc['tencent'].get('secret_key', '')):
+                        if not os.getenv('TENCENT_SECRET_KEY'):
+                            os.environ['TENCENT_SECRET_KEY'] = str(_oc['tencent']['secret_key'])
+                    if _oc.get('baidu', {}).get('api_key') and '填入' not in str(_oc['baidu'].get('api_key', '')):
+                        if not os.getenv('BAIDU_API_KEY'):
+                            os.environ['BAIDU_API_KEY'] = str(_oc['baidu']['api_key'])
+                    if _oc.get('baidu', {}).get('secret_key') and '填入' not in str(_oc['baidu'].get('secret_key', '')):
+                        if not os.getenv('BAIDU_SECRET_KEY'):
+                            os.environ['BAIDU_SECRET_KEY'] = str(_oc['baidu']['secret_key'])
+
+    print("[初始化] OCR引擎...")
     ocr = MultiEngineOCR()
-    if not ocr.current_engine:
+    if not ocr.available_engines:
         print("错误: 没有可用的OCR引擎!")
         return
 
@@ -1660,17 +2190,59 @@ def run_batch_mode(batch_manager: BatchManager):
 # ============================================================
 def print_usage():
     print("\n用法:")
-    print("  python auto_process_all_v9_4.py           # 全自动处理")
-    print("  python auto_process_all_v9_4.py --batch    # 强制分批模式")
-    print("  python auto_process_all_v9_4.py --init     # 仅初始化分批")
-    print("  python auto_process_all_v9_4.py --progress # 查看进度")
-    print("  python auto_process_all_v9_4.py --clear    # 清除分批状态")
+    print("  python auto_process_all_v9_4.py                    # 全自动处理（当前目录）")
+    print("  python auto_process_all_v9_4.py --work-dir <路径>  # 指定工作目录")
+    print("  python auto_process_all_v9_4.py --batch            # 强制分批模式")
+    print("  python auto_process_all_v9_4.py --init             # 仅初始化分批")
+    print("  python auto_process_all_v9_4.py --progress         # 查看进度")
+    print("  python auto_process_all_v9_4.py --clear             # 清除分批状态")
 
 
 def main():
+    # 解析命令行参数（--work-dir 必须在最前面）
+    parser = argparse.ArgumentParser(description='图片知识库处理工具 V9.5', add_help=False)
+    parser.add_argument('--work-dir', '-w', dest='work_dir', help='指定工作目录')
+    parser.add_argument('--help', '-h', action='store_true', help='显示帮助')
+    args, unknown = parser.parse_known_args(sys.argv[1:])
+    
+    # 处理 --help
+    if args.help:
+        print_usage()
+        sys.exit(0)
+    
+    # 处理 --work-dir
+    if args.work_dir:
+        work_dir = Path(args.work_dir).resolve()
+        if not work_dir.exists():
+            print(f"[ERROR] 工作目录不存在: {work_dir}")
+            sys.exit(1)
+        sys._work_dir = str(work_dir)
+        global WORK_DIR, LOG_OUTPUT_DIR
+        WORK_DIR = work_dir
+        LOG_OUTPUT_DIR = WORK_DIR / '处理结果'
+        LOG_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+        # 重新配置日志（只对当前进程有效）
+        for handler in logging.root.handlers[:]:
+            logging.root.removeHandler(handler)
+        logging.basicConfig(
+            level=logging.INFO,
+            format='%(asctime)s - %(message)s',
+            handlers=[
+                logging.FileHandler(str(LOG_OUTPUT_DIR / 'process.log'), encoding='utf-8'),
+                logging.StreamHandler()
+            ]
+        )
+        print(f"[WORK_DIR] 已切换到: {WORK_DIR}")
+    
+    # 首次使用检测
+    if not check_first_run():
+        print("\n请先完成配置后再运行本脚本。")
+        print("运行向导命令：python setup_wizard.py\n")
+        sys.exit(1)
+    
     batch_manager = BatchManager()
-    if len(sys.argv) > 1:
-        cmd = sys.argv[1]
+    if unknown:
+        cmd = unknown[0]
         if cmd == '--init':
             state = batch_manager.initialize()
             if state:

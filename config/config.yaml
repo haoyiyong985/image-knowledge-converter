@@ -1,112 +1,51 @@
-# 图片转知识库系统 - 主配置文件
+# 图片转知识库系统 - 参考配置文件
+#
+# ⚠️ 注意：V9.5 主脚本 (auto_process_all_v9_4.py) 硬编码了中文目录名，
+# 此文件中的路径配置仅供参考，不会被主脚本读取。
+# 实际使用的目录结构如下：
+#   待处理图片/    ← 放入待处理的截图/图片
+#   已处理图片/    ← 处理完成后图片归档于此
+#   处理结果/      ← 生成的 Markdown/Word 文档
+#   config/        ← 配置文件（api_keys.yaml 等）
+#
+# API 密钥配置请编辑：config/api_keys.yaml
 
 system:
   name: "图片转知识库系统"
-  version: "1.0.0"
+  version: "9.5"
   debug: false
   log_level: "INFO"
 
-# 路径配置
+# 路径配置（仅供参考，V9.5 使用硬编码中文目录名）
 paths:
-  image_input: "images/raw"
-  output: "output"
-  knowledge_base: "knowledge_base"
-  logs: "logs"
-  temp: "temp"
+  image_input: "待处理图片"
+  processed_images: "已处理图片"
+  output: "处理结果"
+  config: "config"
+  logs: "处理结果"
 
-# OCR配置
+# OCR配置（V9.5 多引擎自动切换）
 ocr:
-  engine: "tesseract"
+  engines:
+    - "tencent"    # 腾讯云 OCR（优先）
+    - "baidu"      # 百度 OCR（次要）
+    - "tesseract"  # 本地 Tesseract（兜底）
+  engine: "auto"
   language: "chi_sim+eng"
-  psm_mode: 6
-  oem_mode: 3
-  
-  # 预处理配置
-  preprocessing:
-    enabled: true
-    grayscale: true
-    contrast_enhancement: true
-    denoise: true
-    threshold: 150
-    
-  # 表格检测配置
-  table_detection:
-    enabled: true
-    min_table_area: 10000
-    line_min_length: 50
 
-# 输出配置
-output:
-  formats:
-    - "txt"
-    - "json"
-    - "html"
-    - "markdown"
-  
-  # 文本输出配置
-  text:
-    encoding: "utf-8"
-    preserve_layout: true
-    
-  # 表格输出配置
-  table:
-    format: "csv"
-    include_headers: true
-    
-  # HTML输出配置
-  html:
-    template: "default"
-    include_css: true
-    
-  # Markdown输出配置
-  markdown:
-    include_metadata: true
-    table_format: "github"
-
-# 分类配置
+# 分类配置（V9.5 使用 LLM 动态分类，不再使用关键词/ML 分类）
 classification:
-  auto_classify: true
-  confidence_threshold: 0.6
-  
-  # 机器学习配置
-  ml:
-    enabled: true
-    algorithm: "naive_bayes"
-    min_samples: 10
-    test_size: 0.2
-    
-  # 关键词匹配配置
-  keyword:
-    enabled: true
-    case_sensitive: false
-
-# 知识库配置
-knowledge_base:
-  auto_index: true
-  index_update_interval: 3600
-  
-  # 元数据配置
-  metadata:
-    extract_title: true
-    extract_keywords: true
-    generate_summary: true
-    summary_length: 200
-    
-  # 搜索配置
-  search:
-    default_limit: 20
-    fuzzy_match: true
-    fuzzy_threshold: 0.7
+  method: "llm"          # V9.5 动态分类
+  preset_categories:     # LLM 优先复用已有分类
+    - "历史文化"
+    - "营养健康"
+    - "生活方式"
+    - "教育育儿"
+    - "旅游攻略"
+  # 如需关键词匹配分类，请编辑 config/categories.yaml
 
 # 性能配置
 performance:
   max_workers: 4
   batch_size: 10
   timeout: 300
-  
-# 备份配置
-backup:
-  enabled: true
-  interval: 86400
-  keep_count: 7
-  location: "backup"
