@@ -4,7 +4,7 @@
 > **新用户第一次使用会自动启动向导，无需任何技术背景！**
 
 [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![GitHub stars](https://img.shields.io/github/stars/cuixiaohui985/image-knowledge-converter?style=social)](https://github.com/cuixiaohui985/image-knowledge-converter)
+[![GitHub stars](https://img.shields.io/github/stars/haoyiyong985/image-knowledge-converter?style=social)](https://github.com/haoyiyong985/image-knowledge-converter)
 [![WorkBuddy](https://img.shields.io/badge/WorkBuddy-Skill-green)](https://workbuddy.ai)
 
 ---
@@ -80,7 +80,7 @@
 **适合人群**：熟悉 Git 和命令行
 
 ```bash
-git clone https://github.com/cuixiaohui985/image-knowledge-converter.git
+git clone https://github.com/haoyiyong985/image-knowledge-converter.git
 cd image-knowledge-converter
 pip install -r requirements.txt
 python setup_wizard.py   # ← 启动向导
@@ -633,7 +633,7 @@ python auto_process_all_v9_4.py --clear
 
 ## 📧 联系
 
-- GitHub Issues：[提交问题](https://github.com/cuixiaohui985/image-knowledge-converter/issues)
+- GitHub Issues：[提交问题](https://github.com/haoyiyong985/image-knowledge-converter/issues)
 - 邮箱：（添加你的联系方式）
 
 ---
